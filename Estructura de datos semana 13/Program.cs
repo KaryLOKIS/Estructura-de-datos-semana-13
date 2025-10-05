@@ -1,74 +1,109 @@
-﻿class Program
+﻿class Grafo
 {
-    // Catálogo de revistas en un arreglo
-    static string[] catalogo = new string[10] {
-        "National Geographic",
-        "Time",
-        "Scientific American",
-        "Forbes",
-        "Nature",
-        "Reader's Digest",
-        "The Economist",
-        "Sports Illustrated",
-        "Vogue",
-        "Wired"
-    };
+    // Representación de un grafo con lista de adyacencia
+    private System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<(string destino, int costo)>> adyacencia;
 
-    static void Main()
+    public Grafo()
     {
-        int opcion = 0;
-
-        do
-        {
-            System.Console.WriteLine("\n===== MENÚ CATÁLOGO DE REVISTAS =====");
-            System.Console.WriteLine("1. Buscar revista (recursivo)");
-            System.Console.WriteLine("2. Salir");
-            System.Console.Write("Seleccione una opción: ");
-
-            opcion = int.Parse(System.Console.ReadLine());
-
-            if (opcion == 1)
-            {
-                System.Console.Write("\nIngrese el título de la revista a buscar: ");
-                string titulo = System.Console.ReadLine();
-
-                bool encontrado = BuscarRecursivo(titulo, 0);
-
-                if (encontrado)
-                {
-                    System.Console.WriteLine("Encontrado");
-                }
-                else
-                {
-                    System.Console.WriteLine("No encontrado");
-                }
-            }
-            else if (opcion == 2)
-            {
-                System.Console.WriteLine("Saliendo del programa...");
-            }
-            else
-            {
-                System.Console.WriteLine("Opción no válida, intente de nuevo.");
-            }
-
-        } while (opcion != 2);
+        adyacencia = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<(string destino, int costo)>>();
     }
 
-    // Método recursivo para buscar en el arreglo
-    static bool BuscarRecursivo(string titulo, int indice)
+    public void AgregarVuelo(string origen, string destino, int costo)
     {
-        if (indice >= catalogo.Length)
+        if (!adyacencia.ContainsKey(origen))
+            adyacencia[origen] = new System.Collections.Generic.List<(string, int)>();
+
+        adyacencia[origen].Add((destino, costo));
+
+        // Si el destino no existe en el grafo, lo agregamos vacío
+        if (!adyacencia.ContainsKey(destino))
+            adyacencia[destino] = new System.Collections.Generic.List<(string, int)>();
+    }
+
+    // Reportería: mostrar aeropuertos y sus vuelos
+    public void MostrarVuelos()
+    {
+        System.Console.WriteLine(" Lista de vuelos disponibles:");
+        foreach (var nodo in adyacencia)
         {
-            return false; // No se encontró
+            System.Console.WriteLine($"Desde {nodo.Key}:");
+            foreach (var vuelo in nodo.Value)
+                System.Console.WriteLine($"   ➝ {vuelo.destino} (${vuelo.costo})");
+        }
+    }
+
+    // Algoritmo de Dijkstra para encontrar el vuelo más barato
+    public void VueloMasBarato(string origen, string destino)
+    {
+        var distancias = new System.Collections.Generic.Dictionary<string, int>();
+        var visitados = new System.Collections.Generic.HashSet<string>();
+        var previo = new System.Collections.Generic.Dictionary<string, string>();
+        var cola = new System.Collections.Generic.PriorityQueue<string, int>();
+
+        foreach (var nodo in adyacencia.Keys)
+            distancias[nodo] = int.MaxValue;
+
+        distancias[origen] = 0;
+        cola.Enqueue(origen, 0);
+
+        while (cola.Count > 0)
+        {
+            var actual = cola.Dequeue();
+            if (visitados.Contains(actual)) continue;
+            visitados.Add(actual);
+
+            foreach (var vuelo in adyacencia[actual])
+            {
+                int nuevaDist = distancias[actual] + vuelo.costo;
+                if (nuevaDist < distancias[vuelo.destino])
+                {
+                    distancias[vuelo.destino] = nuevaDist;
+                    previo[vuelo.destino] = actual;
+                    cola.Enqueue(vuelo.destino, nuevaDist);
+                }
+            }
         }
 
-        if (catalogo[indice].ToLower() == titulo.ToLower())
+        if (distancias[destino] == int.MaxValue)
         {
-            return true; // Se encontró
+            System.Console.WriteLine($"No existe vuelo de {origen} a {destino}");
+            return;
         }
 
-        // Llamada recursiva al siguiente índice
-        return BuscarRecursivo(titulo, indice + 1);
+        // Reconstruir la ruta
+        var ruta = new System.Collections.Generic.Stack<string>();
+        string actualRuta = destino;
+        while (actualRuta != origen)
+        {
+            ruta.Push(actualRuta);
+            actualRuta = previo[actualRuta];
+        }
+        ruta.Push(origen);
+
+        System.Console.WriteLine($"\n✈️ Vuelo más barato de {origen} a {destino}: ${distancias[destino]}");
+        System.Console.Write("Ruta: ");
+        System.Console.WriteLine(string.Join(" ➝ ", ruta));
     }
 }
+
+class Program
+{
+    static void Main()
+    {
+        Grafo vuelos = new Grafo();
+
+        // Base de datos ficticia (simulada dentro del código)
+        vuelos.AgregarVuelo("Quito", "Guayaquil", 100);
+        vuelos.AgregarVuelo("Quito", "Cuenca", 80);
+        vuelos.AgregarVuelo("Cuenca", "Guayaquil", 40);
+        vuelos.AgregarVuelo("Guayaquil", "Manta", 50);
+        vuelos.AgregarVuelo("Cuenca", "Loja", 60);
+        vuelos.AgregarVuelo("Loja", "Manta", 90);
+
+        vuelos.MostrarVuelos();
+
+        System.Console.WriteLine("\n🔍 Consulta de vuelo:");
+        vuelos.VueloMasBarato("Quito", "Manta");
+    }
+}
+
