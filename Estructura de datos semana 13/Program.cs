@@ -80,7 +80,7 @@
         }
         ruta.Push(origen);
 
-        System.Console.WriteLine($"\n✈️ Vuelo más barato de {origen} a {destino}: ${distancias[destino]}");
+        System.Console.WriteLine($"\n Vuelo más barato de {origen} a {destino}: ${distancias[destino]}");
         System.Console.Write("Ruta: ");
         System.Console.WriteLine(string.Join(" ➝ ", ruta));
     }
@@ -102,7 +102,7 @@ class Program
 
         vuelos.MostrarVuelos();
 
-        System.Console.WriteLine("\n🔍 Consulta de vuelo:");
+        System.Console.WriteLine("\n Consulta de vuelo:");
         vuelos.VueloMasBarato("Quito", "Manta");
     }
 }
